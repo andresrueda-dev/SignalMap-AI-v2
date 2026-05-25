@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-
+from scipy.stats import gaussian_kde
 from sklearn.cluster import KMeans
 from scipy.stats import gaussian_kde
 
