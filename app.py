@@ -1,385 +1,715 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
-from scipy.stats import gaussian_kde
-from sklearn.cluster import KMeans
-from scipy.stats import gaussian_kde
+import plotly.express as px
+import numpy as np
+import pandas as pd
+import json
+import os
+import glob
+import re
+import easyocr
+
+from PIL import Image
+from datetime import datetime
 
 # ==================================================
-# PAGE CONFIG
+# CONFIGURACIÓN GENERAL
 # ==================================================
 
 st.set_page_config(
+
     page_title="Signal Map AI",
-    page_icon="📊",
+
     layout="wide"
 )
 
 # ==================================================
-# TITLE
+# ESTILO VISUAL
 # ==================================================
 
-st.title("📊 Signal Map AI")
-st.markdown(
-    "Advanced Pattern Detection • Cluster Intelligence • Momentum Analysis"
-)
+st.markdown("""
+
+<style>
+
+.stApp{
+
+    background-color:#050816;
+    color:white;
+}
+
+[data-testid="stSidebar"]{
+
+    background-color:#0B1026;
+}
+
+h1,h2,h3,h4{
+
+    color:#C8B6FF;
+}
+
+div.stButton > button{
+
+    background:#7B61FF;
+    color:white;
+    border-radius:12px;
+    border:none;
+    padding:0.6rem 1rem;
+    font-weight:bold;
+}
+
+div.stMetric{
+
+    background-color:#11162A;
+    padding:10px;
+    border-radius:10px;
+}
+
+</style>
+
+""", unsafe_allow_html=True)
 
 # ==================================================
-# SIDEBAR
+# CREAR CARPETA
 # ==================================================
 
-st.sidebar.header("⚙️ Configuration")
-
-user_input = st.sidebar.text_area(
-    "Enter Numbers (comma separated)",
-    "30,33,44,45,46,48,16"
-)
-
-advanced_mode = st.sidebar.checkbox(
-    "Enable Advanced AI Analysis",
-    value=True
-)
+os.makedirs("signals", exist_ok=True)
 
 # ==================================================
-# DATA PARSING
+# SIDEBAR VISUAL SYSTEM
 # ==================================================
 
-try:
+st.sidebar.markdown("""
 
-    numbers = [
-        int(x.strip())
-        for x in user_input.split(",")
-        if x.strip() != ""
+# 🌌 SIGNAL MAP AI
+
+### Cartografía de Señales
+Sistema Experimental de Patrones
+
+---
+
+""")
+
+page = st.sidebar.radio(
+
+    "🧭 Navegación",
+
+    [
+
+        "⚡ Registro Rápido",
+
+        "🌌 Constelación del Día",
+
+        "🖼️ Cargar Imagen",
+
+        "📖 Diario de Señales",
+
+        "📈 Timeline",
+
+        "🧠 Insights IA",
+
+        "🎲 Predicción Numérica",
+
+        "🧩 Constellation Map",
+
+        "⚡ Tesla Nodes",
+
+        "🗺️ Cartography Layer",
+
+        "🔮 AI Interpretation",
+
+        "📡 Pattern Evolution"
     ]
+)
 
-except:
+st.sidebar.markdown("---")
 
-    st.error("Invalid input format.")
-    st.stop()
+st.sidebar.markdown("""
 
-# ==================================================
-# BASIC DATAFRAME
-# ==================================================
+### 🛰️ Estado del Sistema
 
-df = pd.DataFrame({
-    "Index": range(len(numbers)),
-    "Value": numbers
-})
+🟢 Núcleo IA activo  
+🟢 Cartografía cargada  
+🟢 Registro sincronizado  
+🟣 Nodo Tesla disponible  
+🔵 Constelaciones dinámicas  
 
-# ==================================================
-# BASIC METRICS
-# ==================================================
+""")
 
-col1, col2, col3, col4 = st.columns(4)
+st.sidebar.markdown("---")
 
-with col1:
-    st.metric("Total Numbers", len(numbers))
-
-with col2:
-    st.metric("Average", round(np.mean(numbers), 2))
-
-with col3:
-    st.metric("Max", max(numbers))
-
-with col4:
-    st.metric("Min", min(numbers))
+st.sidebar.caption(
+    "Signal Map AI v2.0"
+)
 
 # ==================================================
-# MAIN CHART
+# CLASIFICADOR IA
 # ==================================================
 
-fig = go.Figure()
+def classify_signal(signal):
 
-fig.add_trace(
-    go.Scatter(
-        x=df["Index"],
-        y=df["Value"],
-        mode="lines+markers",
-        name="Signal"
+    clean_signal = signal.replace(":", "")
+
+    if ":" in signal:
+
+        parts = signal.split(":")
+
+        if len(parts) == 2:
+
+            if parts[0] == parts[1]:
+
+                return "Hora Espejo"
+
+            elif parts[0] == parts[1][::-1]:
+
+                return "Hora Reflejo"
+
+    if len(set(clean_signal)) == 1:
+
+        return "Número Repetitivo"
+
+    ascending = ''.join(
+        sorted(clean_signal)
     )
-)
 
-fig.update_layout(
-    title="Signal Movement",
-    xaxis_title="Sequence",
-    yaxis_title="Value",
-    template="plotly_dark",
-    height=500
-)
+    if clean_signal == ascending:
 
-st.plotly_chart(fig, use_container_width=True)
+        return "Secuencia Ascendente"
+
+    descending = ''.join(
+        sorted(clean_signal, reverse=True)
+    )
+
+    if clean_signal == descending:
+
+        return "Secuencia Descendente"
+
+    return "Patrón General"
 
 # ==================================================
-# ADVANCED AI ANALYSIS
+# REGISTRO RÁPIDO
 # ==================================================
 
-if advanced_mode:
+if page == "⚡ Registro Rápido":
 
-    st.markdown("---")
-    st.header("🔍 Advanced Pattern Detection")
+    st.title("Registro Rápido de Señales")
 
-    try:
+    st.markdown("""
 
-        values = np.array(numbers).reshape(-1, 1)
+Aquí puedes registrar:
 
-        # ==========================================
-        # AUTO CLUSTER DETECTION
-        # ==========================================
+• Horas espejo  
+• Números repetitivos  
+• Secuencias  
+• Sincronías  
+• Señales del día
 
-        n_clusters = min(3, len(numbers))
+""")
 
-        kmeans = KMeans(
-            n_clusters=n_clusters,
-            random_state=42,
-            n_init=10
-        )
+    signal_input = st.text_input(
 
-        kmeans.fit(values)
+        "Escribe una señal",
 
-        labels = kmeans.labels_
-        centroids = kmeans.cluster_centers_
+        placeholder="Ejemplo: 11:11"
+    )
 
-        df["Cluster"] = labels
+    today = str(datetime.now().date())
 
-        st.subheader("🧩 Automatic Cluster Detection")
+    signal_file = f"signals/{today}.json"
 
-        cluster_data = {}
+    if os.path.exists(signal_file):
 
-        for i in range(n_clusters):
+        with open(signal_file, "r", encoding="utf-8") as f:
 
-            cluster_values = [
-                numbers[j]
-                for j in range(len(numbers))
-                if labels[j] == i
-            ]
+            daily_data = json.load(f)
 
-            cluster_data[i] = cluster_values
+    else:
 
-            st.write(
-                f"Cluster {i+1}: {cluster_values}"
+        daily_data = {
+
+            "date": today,
+
+            "signals": []
+        }
+
+    if st.button("Guardar Señal"):
+
+        if signal_input != "":
+
+            signal_type = classify_signal(
+                signal_input
             )
 
-        # ==========================================
-        # CENTROID AVERAGE
-        # ==========================================
+            signal_data = {
 
-        avg_centroid = np.mean(centroids)
+                "signal": signal_input,
 
-        st.subheader("🎯 Average Centroid")
+                "type": signal_type,
 
-        st.metric(
-            "Centroid Average",
-            round(float(avg_centroid), 2)
-        )
+                "timestamp":
+                str(datetime.now())
+            }
 
-        # ==========================================
-        # DOMINANT RANGE
-        # ==========================================
+            daily_data["signals"].append(
+                signal_data
+            )
 
-        ranges = []
+            with open(
 
-        for cluster_values in cluster_data.values():
+                signal_file,
 
-            if len(cluster_values) > 0:
+                "w",
 
-                cluster_range = (
-                    min(cluster_values),
-                    max(cluster_values)
+                encoding="utf-8"
+
+            ) as f:
+
+                json.dump(
+                    daily_data,
+                    f,
+                    indent=4
                 )
 
-                ranges.append(cluster_range)
+            st.success(
+                f"Señal guardada como: {signal_type}"
+            )
 
-        dominant_range = max(
-            ranges,
-            key=lambda r: r[1] - r[0]
+    st.subheader("Señales Registradas Hoy")
+
+    if len(daily_data["signals"]) == 0:
+
+        st.warning(
+            "Aún no hay señales registradas."
         )
 
-        st.subheader("📈 Dominant Range")
+    else:
 
-        st.success(
-            f"{dominant_range[0]} - {dominant_range[1]}"
+        for item in daily_data["signals"]:
+
+            st.markdown(f"""
+
+### {item['signal']}
+
+• Tipo:
+{item['type']}
+
+• Hora:
+{item['timestamp']}
+
+""")
+
+# ==================================================
+# CONSTELACIÓN DEL DÍA
+# ==================================================
+
+if page == "🌌 Constelación del Día":
+
+    st.title("Constelación del Día")
+
+    today = str(datetime.now().date())
+
+    signal_file = f"signals/{today}.json"
+
+    if os.path.exists(signal_file):
+
+        with open(signal_file, "r", encoding="utf-8") as f:
+
+            daily_data = json.load(f)
+
+        freq_map = {}
+
+        for item in daily_data["signals"]:
+
+            signal = item["signal"]
+
+            if signal in freq_map:
+
+                freq_map[signal] += 1
+
+            else:
+
+                freq_map[signal] = 1
+
+        signals = list(freq_map.keys())
+
+        repetitions = list(freq_map.values())
+
+        if len(signals) > 0:
+
+            fig = go.Figure()
+
+            angles = np.linspace(
+                0,
+                2*np.pi,
+                len(signals),
+                endpoint=False
+            )
+
+            radius = repetitions
+
+            x = radius * np.cos(angles)
+
+            y = radius * np.sin(angles)
+
+            for i in range(len(x)):
+
+                next_i = (i + 1) % len(x)
+
+                fig.add_trace(
+
+                    go.Scatter(
+
+                        x=[x[i], x[next_i]],
+
+                        y=[y[i], y[next_i]],
+
+                        mode="lines",
+
+                        line=dict(
+                            width=2,
+                            color="#7B61FF"
+                        ),
+
+                        showlegend=False
+                    )
+                )
+
+            fig.add_trace(
+
+                go.Scatter(
+
+                    x=x,
+
+                    y=y,
+
+                    mode="markers+text",
+
+                    marker=dict(
+
+                        size=[
+                            r * 15
+                            for r in repetitions
+                        ],
+
+                        color="#B388FF",
+
+                        line=dict(
+                            width=2,
+                            color="white"
+                        )
+                    ),
+
+                    text=signals,
+
+                    textposition="top center"
+                )
+            )
+
+            fig.update_layout(
+
+                height=700,
+
+                paper_bgcolor="#050816",
+
+                plot_bgcolor="#050816",
+
+                font=dict(
+                    color="white"
+                ),
+
+                xaxis=dict(
+                    visible=False
+                ),
+
+                yaxis=dict(
+                    visible=False
+                )
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+# ==================================================
+# CARGAR IMAGEN
+# ==================================================
+
+if page == "🖼️ Cargar Imagen":
+
+    st.title("Cargar Imagen de Señales")
+
+    uploaded_file = st.file_uploader(
+
+        "Selecciona una imagen",
+
+        type=["png", "jpg", "jpeg"]
+    )
+
+    if uploaded_file is not None:
+
+        image = Image.open(uploaded_file)
+
+        st.image(
+            image,
+            caption="Imagen Cargada",
+            use_container_width=True
         )
 
-        # ==========================================
-        # CLUSTER COLORING GRAPH
-        # ==========================================
+        reader = easyocr.Reader(['en'])
 
-        st.subheader("🌈 Cluster Coloring Graph")
+        results = reader.readtext(
+            np.array(image)
+        )
 
-        cluster_fig = px.scatter(
+        detected_text = ""
+
+        for result in results:
+
+            detected_text += result[1] + " "
+
+        st.subheader("Texto Detectado")
+
+        st.write(detected_text)
+
+# ==================================================
+# DIARIO DE SEÑALES
+# ==================================================
+
+if page == "📖 Diario de Señales":
+
+    st.title("Diario de Señales")
+
+    files = sorted(
+        glob.glob("signals/*.json")
+    )
+
+    if len(files) == 0:
+
+        st.warning(
+            "Aún no hay registros."
+        )
+
+    else:
+
+        for file in reversed(files):
+
+            with open(file, "r", encoding="utf-8") as f:
+
+                data = json.load(f)
+
+            st.subheader(data["date"])
+
+            for item in data["signals"]:
+
+                st.markdown(f"""
+
+### {item['signal']}
+
+• Tipo:
+{item['type']}
+
+• Hora:
+{item['timestamp']}
+
+""")
+
+# ==================================================
+# TIMELINE
+# ==================================================
+
+if page == "📈 Timeline":
+
+    st.title("Timeline de Señales")
+
+    files = sorted(
+        glob.glob("signals/*.json")
+    )
+
+    timeline_data = []
+
+    for file in files:
+
+        with open(file, "r", encoding="utf-8") as f:
+
+            data = json.load(f)
+
+        timeline_data.append({
+
+            "Fecha": data["date"],
+
+            "Cantidad":
+            len(data["signals"])
+        })
+
+    if len(timeline_data) > 0:
+
+        df = pd.DataFrame(
+            timeline_data
+        )
+
+        st.dataframe(
             df,
-            x="Index",
-            y="Value",
-            color="Cluster",
-            size="Value",
-            template="plotly_dark",
-            title="Cluster Visualization"
-        )
-
-        st.plotly_chart(
-            cluster_fig,
             use_container_width=True
         )
 
-        # ==========================================
-        # DENSITY HEATMAP
-        # ==========================================
+# ==================================================
+# INSIGHTS IA
+# ==================================================
 
-        st.subheader("🔥 Density Heatmap")
+if page == "🧠 Insights IA":
 
-        density = gaussian_kde(numbers)
+    st.title("Insights IA")
 
-        xs = np.linspace(
-            min(numbers),
-            max(numbers),
-            200
-        )
+    st.info("""
 
-        ys = density(xs)
+La IA analiza:
 
-        heatmap_fig = go.Figure()
+• persistencia  
+• sincronías  
+• repetición estructural  
+• patrones dominantes  
 
-        heatmap_fig.add_trace(
-            go.Scatter(
-                x=xs,
-                y=ys,
-                fill='tozeroy',
-                mode='lines',
-                name='Density'
+""")
+
+# ==================================================
+# PREDICCIÓN NUMÉRICA
+# ==================================================
+
+if page == "🎲 Predicción Numérica":
+
+    st.title("Predicción Numérica")
+
+    st.info("""
+
+Generador experimental basado en:
+
+• frecuencias  
+• patrones  
+• resonancias  
+• señales registradas  
+
+""")
+
+# ==================================================
+# CONSTELLATION MAP
+# ==================================================
+
+if page == "🧩 Constellation Map":
+
+    st.title("🧩 Constellation Map")
+
+    st.info("""
+
+Mapa avanzado de nodos y agrupaciones.
+
+""")
+
+# ==================================================
+# TESLA NODES
+# ==================================================
+
+if page == "⚡ Tesla Nodes":
+
+    st.title("⚡ Tesla Nodes")
+
+    files = sorted(
+        glob.glob("signals/*.json")
+    )
+
+    frequency_map = {}
+
+    for file in files:
+
+        with open(file, "r", encoding="utf-8") as f:
+
+            data = json.load(f)
+
+        for item in data["signals"]:
+
+            nums = re.findall(
+                r'\d',
+                item["signal"]
             )
-        )
 
-        heatmap_fig.update_layout(
-            template="plotly_dark",
-            title="Density Distribution Heatmap",
-            xaxis_title="Value",
-            yaxis_title="Density",
-            height=450
-        )
+            for n in nums:
 
-        st.plotly_chart(
-            heatmap_fig,
-            use_container_width=True
-        )
+                n = int(n)
 
-        # ==========================================
-        # CONFIDENCE SCORE
-        # ==========================================
+                if n in frequency_map:
 
-        st.subheader("🛡️ Confidence Score")
+                    frequency_map[n] += 1
 
-        variance = np.var(numbers)
+                else:
 
-        confidence_score = max(
-            0,
-            100 - variance
-        )
+                    frequency_map[n] = 1
 
-        confidence_score = round(
-            confidence_score,
-            2
-        )
+    if len(frequency_map) > 0:
 
-        st.metric(
-            "Pattern Confidence",
-            f"{confidence_score}%"
-        )
+        df = pd.DataFrame({
 
-        # ==========================================
-        # MOMENTUM DETECTION
-        # ==========================================
+            "Número":
+            list(frequency_map.keys()),
 
-        st.subheader("⚡ Momentum Detection")
+            "Frecuencia":
+            list(frequency_map.values())
+        })
 
-        momentum = np.diff(numbers)
+        fig = px.bar(
 
-        avg_momentum = np.mean(momentum)
+            df,
 
-        if avg_momentum > 0:
+            x="Número",
 
-            momentum_text = "Bullish Momentum ↗️"
+            y="Frecuencia",
 
-        elif avg_momentum < 0:
+            color="Frecuencia",
 
-            momentum_text = "Bearish Momentum ↘️"
-
-        else:
-
-            momentum_text = "Neutral Momentum ➖"
-
-        st.info(momentum_text)
-
-        momentum_fig = go.Figure()
-
-        momentum_fig.add_trace(
-            go.Bar(
-                x=list(range(len(momentum))),
-                y=momentum,
-                name="Momentum"
-            )
-        )
-
-        momentum_fig.update_layout(
-            template="plotly_dark",
-            title="Momentum Flow",
-            xaxis_title="Position",
-            yaxis_title="Momentum",
-            height=400
+            template="plotly_dark"
         )
 
         st.plotly_chart(
-            momentum_fig,
+            fig,
             use_container_width=True
         )
 
-        # ==========================================
-        # AI INSIGHT SUMMARY
-        # ==========================================
-
-        st.subheader("🧠 AI Insight Summary")
-
-        insight = f"""
-        The AI system detected {n_clusters} major behavioral clusters.
-
-        The average centroid concentration is near
-        {round(float(avg_centroid),2)}.
-
-        Dominant operational range detected between
-        {dominant_range[0]} and {dominant_range[1]}.
-
-        Estimated confidence score:
-        {confidence_score}%.
-
-        Current momentum state:
-        {momentum_text}
-        """
-
-        st.success(insight)
-
-    except Exception as e:
-
-        st.error(
-            f"Advanced analysis error: {e}"
-        )
-
 # ==================================================
-# RAW DATA
+# CARTOGRAPHY LAYER
 # ==================================================
 
-st.markdown("---")
+if page == "🗺️ Cartography Layer":
 
-st.subheader("📋 Raw Data")
+    st.title("🗺️ Cartography Layer")
 
-st.dataframe(df)
+    st.info("""
+
+Heatmaps y capas de densidad.
+
+""")
 
 # ==================================================
-# FOOTER
+# AI INTERPRETATION
 # ==================================================
 
-st.markdown("---")
+if page == "🔮 AI Interpretation":
 
-st.caption(
-    "Signal Map AI • Advanced Cluster Intelligence System"
-)
+    st.title("🔮 AI Interpretation")
+
+    st.info("""
+
+Confidence score y lectura contextual IA.
+
+""")
+
+# ==================================================
+# PATTERN EVOLUTION
+# ==================================================
+
+if page == "📡 Pattern Evolution":
+
+    st.title("📡 Pattern Evolution")
+
+    st.info("""
+
+Seguimiento evolutivo de patrones.
+
+""")
